@@ -17,3 +17,7 @@ add_library(pool STATIC
     ${INCLUDE_FILES}
     ${SOURCE_FILES}
 )
+
+include_directories(".")
+add_executable(testapp test/test.c)
+target_link_libraries(testapp pool)
