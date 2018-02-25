@@ -95,6 +95,8 @@ void* pool_alloc(size_t size)
 void pool_free(void * memory)
 {
     stats.free_times++;
+    if (memory == NULL)
+        return;
     MemBlock *block = (MemBlock*)memory - 1;
     MemClass *class = get_class(block->size);
     if (class != NULL)
