@@ -12,7 +12,7 @@ typedef struct MemClass
     size_t size;
     size_t length;
     size_t max_length;
-    MemBlock *free_block;
+    MemBlock *free_list;
 } MemClass;
 
 static MemClass mem_classes[] =
@@ -45,16 +45,16 @@ void pool_uninit()
 {
     for (size_t i = 0; i < sizeof(mem_classes) / sizeof(mem_classes[0]); i++)
     {
-        MemClass *c = &mem_classes[i];
-        MemBlock *p = c->free_block;
-        while (p)
+        MemClass *class = &mem_classes[i];
+        MemBlock *block = class->free_list;
+        while (block)
         {
-            MemBlock *next = p->next;
-            free(p);
-            p = next;
+            MemBlock *next = block->next;
+            free(block);
+            block = next;
         }
-        c->free_block = NULL;
-        c->length = 0;
+        class->free_list = NULL;
+        class->length = 0;
     }
 }
 
@@ -66,10 +66,10 @@ void* pool_alloc(size_t size)
     MemClass *class = get_class(size);
     if (class != NULL)
     {
-        if (class->free_block != NULL)
+        if (class->free_list != NULL)
         {
-            block = class->free_block;
-            class->free_block = block->next;
+            block = class->free_list;
+            class->free_list = block->next;
             class->length--;
             block++;
         }
@@ -101,8 +101,8 @@ void pool_free(void * memory)
     {
         if (class->length < class->max_length)
         {
-            block->next = class->free_block;
-            class->free_block = block;
+            block->next = class->free_list;
+            class->free_list = block;
             class->length++;
             block = NULL;
         }
